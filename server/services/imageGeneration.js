@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,12 +6,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize Google Generative AI with API key
-console.log('🔑 Initializing Google Generative AI...');
+// Initialize Google GenAI with API key for consumer API (not Vertex AI)
+console.log('🔑 Initializing Google GenAI...');
 console.log('API Key present:', !!process.env.GOOGLE_API_KEY);
 console.log('API Key length:', process.env.GOOGLE_API_KEY?.length || 0);
 
-const ai = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const ai = new GoogleGenAI({
+  apiKey: process.env.GOOGLE_API_KEY,
+});
 
 // Style-specific prompts from prompts.md
 const stylePrompts = {
@@ -99,19 +101,24 @@ export const generateHeadshotWithAI = async (imagePath, styleId) => {
     console.log(`   Model: gemini-2.5-flash-image`);
     console.log(`   Prompt length: ${prompt.length} chars`);
 
-    // Call Google Gemini API
-    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
-    const response = await model.generateContent(promptArray);
+    // Call Google Gemini API using the new SDK pattern
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: promptArray,
+    });
 
     console.log('✓ API call completed');
+    console.log('Response structure:', JSON.stringify(response, null, 2).substring(0, 500));
 
     // Extract the generated image from the response
     if (!response.candidates || response.candidates.length === 0) {
+      console.error('❌ No candidates in response');
       throw new Error('No candidates returned from API');
     }
 
     const candidate = response.candidates[0];
     if (!candidate.content || !candidate.content.parts) {
+      console.error('❌ Invalid candidate structure:', JSON.stringify(candidate, null, 2));
       throw new Error('Invalid response structure from API');
     }
 
@@ -119,10 +126,12 @@ export const generateHeadshotWithAI = async (imagePath, styleId) => {
     for (const part of candidate.content.parts) {
       if (part.inlineData) {
         console.log('✅ Headshot generated successfully');
+        console.log('   Image size:', part.inlineData.data.length, 'bytes (base64)');
         return part.inlineData.data; // Return base64 encoded image
       }
     }
 
+    console.error('❌ No image data in response parts:', JSON.stringify(candidate.content.parts, null, 2));
     throw new Error('No image data found in API response');
   } catch (error) {
     console.error('❌ Error generating headshot:');
