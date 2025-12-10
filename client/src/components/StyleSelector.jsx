@@ -17,14 +17,14 @@ const styles = [
   },
   {
     id: 'executive-portrait',
-    name: 'Executive Portrait',
+    name: 'Editorial Portrait',
     description: 'High-end, polished executive presence with premium lighting',
     icon: '💼',
     color: 'gray',
   },
   {
     id: 'creative-social',
-    name: 'Authentically Creative Social Media',
+    name: 'Social Media',
     description: 'Vibrant, personality-driven style optimized for social platforms',
     icon: '✨',
     color: 'pink',
