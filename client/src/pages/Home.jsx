@@ -37,23 +37,16 @@ const Home = () => {
       // Upload image to backend
       const uploadResponse = await uploadImage(uploadedImage.file);
 
-      // For Milestone 1, we'll use a mock response
-      // In Milestone 2, this will call the actual AI API
-      setTimeout(() => {
-        // Mock generated headshot (using the original image as placeholder)
-        setGeneratedHeadshot(uploadedImage.preview);
-        setIsLoading(false);
-        navigate('/results');
-      }, 2000);
+      // Generate headshot with Google Gemini API
+      const generateResponse = await generateHeadshot(
+        uploadResponse.data.imageId,
+        selectedStyle.id
+      );
 
-      // Uncomment for Milestone 2:
-      // const generateResponse = await generateHeadshot(
-      //   uploadResponse.imageId,
-      //   selectedStyle.id
-      // );
-      // setGeneratedHeadshot(generateResponse.imageUrl);
-      // setIsLoading(false);
-      // navigate('/results');
+      // Set the generated headshot (base64 data URL)
+      setGeneratedHeadshot(generateResponse.data.imageUrl);
+      setIsLoading(false);
+      navigate('/results');
     } catch (err) {
       console.error('Error generating headshot:', err);
       setError(err.response?.data?.message || 'Failed to generate headshot. Please try again.');

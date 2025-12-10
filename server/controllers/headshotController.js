@@ -1,6 +1,7 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import { generateHeadshotWithAI } from '../services/imageGeneration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ export const uploadImage = async (req, res, next) => {
   }
 };
 
-// Generate headshot endpoint (stubbed for Milestone 1)
+// Generate headshot endpoint with Google Gemini API
 export const generateHeadshot = async (req, res, next) => {
   try {
     const { imageId, style } = req.body;
@@ -45,21 +46,36 @@ export const generateHeadshot = async (req, res, next) => {
       });
     }
 
-    // For Milestone 1, return a mock response
-    // In Milestone 2, this will call the Google Imagen 3 API
-    setTimeout(() => {
-      res.status(200).json({
-        success: true,
-        message: 'Headshot generated successfully (mock)',
-        data: {
-          jobId: `job-${Date.now()}`,
-          imageUrl: '/placeholder-generated.jpg',
-          style: style,
-          status: 'completed',
-        },
+    // Construct path to uploaded image
+    const imagePath = path.join(__dirname, '../uploads', imageId);
+
+    // Check if file exists
+    try {
+      await fs.access(imagePath);
+    } catch {
+      return res.status(404).json({
+        success: false,
+        message: 'Uploaded image not found',
       });
-    }, 1500);
+    }
+
+    console.log(`🚀 Starting headshot generation for ${imageId} with style: ${style}`);
+
+    // Generate headshot using Google Gemini API
+    const generatedImageBase64 = await generateHeadshotWithAI(imagePath, style);
+
+    // Return the base64 image directly
+    res.status(200).json({
+      success: true,
+      message: 'Headshot generated successfully',
+      data: {
+        imageUrl: `data:image/png;base64,${generatedImageBase64}`,
+        style: style,
+        status: 'completed',
+      },
+    });
   } catch (error) {
+    console.error('Error in generateHeadshot controller:', error);
     next(error);
   }
 };
