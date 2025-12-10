@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,14 +6,12 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialize Google GenAI with API key
-console.log('🔑 Initializing Google GenAI...');
+// Initialize Google Generative AI with API key
+console.log('🔑 Initializing Google Generative AI...');
 console.log('API Key present:', !!process.env.GOOGLE_API_KEY);
 console.log('API Key length:', process.env.GOOGLE_API_KEY?.length || 0);
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GOOGLE_API_KEY,
-});
+const ai = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 // Style-specific prompts from prompts.md
 const stylePrompts = {
