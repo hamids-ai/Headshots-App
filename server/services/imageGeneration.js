@@ -7,6 +7,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Initialize Google GenAI with API key
+console.log('🔑 Initializing Google GenAI...');
+console.log('API Key present:', !!process.env.GOOGLE_API_KEY);
+console.log('API Key length:', process.env.GOOGLE_API_KEY?.length || 0);
+
 const ai = new GoogleGenAI({
   apiKey: process.env.GOOGLE_API_KEY,
 });
@@ -56,21 +60,31 @@ Technical Specs:
  */
 export const generateHeadshotWithAI = async (imagePath, styleId) => {
   try {
+    console.log(`📥 Starting generation for image: ${imagePath}, style: ${styleId}`);
+
     // Validate style
     const prompt = stylePrompts[styleId];
     if (!prompt) {
-      throw new Error(`Invalid style ID: ${styleId}`);
+      const error = `Invalid style ID: ${styleId}. Available: ${Object.keys(stylePrompts).join(', ')}`;
+      console.error('❌', error);
+      throw new Error(error);
     }
 
+    console.log('✓ Style validated');
+
     // Read the image file
+    console.log('📂 Reading image file...');
     const imageData = await fs.readFile(imagePath);
     const base64Image = imageData.toString('base64');
+    console.log(`✓ Image read successfully (${imageData.length} bytes)`);
 
     // Get file extension to determine mime type
     const ext = path.extname(imagePath).toLowerCase();
     let mimeType = 'image/jpeg';
     if (ext === '.png') mimeType = 'image/png';
     else if (ext === '.webp') mimeType = 'image/webp';
+
+    console.log(`✓ MIME type: ${mimeType}`);
 
     // Prepare the prompt for the API
     const promptArray = [
@@ -83,13 +97,15 @@ export const generateHeadshotWithAI = async (imagePath, styleId) => {
       },
     ];
 
-    console.log(`🎨 Generating headshot with style: ${styleId}`);
+    console.log(`🎨 Calling Google Gemini API...`);
+    console.log(`   Model: gemini-2.5-flash-image`);
+    console.log(`   Prompt length: ${prompt.length} chars`);
 
     // Call Google Gemini API
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: promptArray,
-    });
+    const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
+    const response = await model.generateContent(promptArray);
+
+    console.log('✓ API call completed');
 
     // Extract the generated image from the response
     if (!response.candidates || response.candidates.length === 0) {
@@ -111,7 +127,12 @@ export const generateHeadshotWithAI = async (imagePath, styleId) => {
 
     throw new Error('No image data found in API response');
   } catch (error) {
-    console.error('❌ Error generating headshot:', error.message);
+    console.error('❌ Error generating headshot:');
+    console.error('   Message:', error.message);
+    console.error('   Stack:', error.stack);
+    if (error.response) {
+      console.error('   API Response:', JSON.stringify(error.response, null, 2));
+    }
     throw error;
   }
 };
