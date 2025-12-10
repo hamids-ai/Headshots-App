@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: true, // Allow all origins for development
   credentials: true,
 }));
 app.use(express.json());
@@ -41,9 +41,10 @@ app.get('/health', (req, res) => {
 // Error handler (must be last)
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+// Start server - bind to 0.0.0.0 to allow external access
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is running on http://0.0.0.0:${PORT}`);
   console.log(`📁 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📂 Upload directory: ${path.join(__dirname, 'uploads')}`);
+  console.log(`🌐 Access via forwarded port in your browser`);
 });
