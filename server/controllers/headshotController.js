@@ -9,7 +9,10 @@ const __dirname = path.dirname(__filename);
 // Upload image endpoint
 export const uploadImage = async (req, res, next) => {
   try {
+    console.log('📤 Received image upload request');
+
     if (!req.file) {
+      console.error('❌ No file in request');
       return res.status(400).json({
         success: false,
         message: 'No file uploaded',
@@ -24,12 +27,15 @@ export const uploadImage = async (req, res, next) => {
       path: req.file.path,
     };
 
+    console.log('✅ Image uploaded:', imageData.imageId);
+
     res.status(200).json({
       success: true,
       message: 'Image uploaded successfully',
       data: imageData,
     });
   } catch (error) {
+    console.error('❌ Error in uploadImage:', error);
     next(error);
   }
 };
@@ -37,9 +43,13 @@ export const uploadImage = async (req, res, next) => {
 // Generate headshot endpoint with Google Gemini API
 export const generateHeadshot = async (req, res, next) => {
   try {
+    console.log('📨 Received headshot generation request');
+    console.log('   Request body:', JSON.stringify(req.body, null, 2));
+
     const { imageId, style } = req.body;
 
     if (!imageId || !style) {
+      console.error('❌ Validation failed: Missing imageId or style');
       return res.status(400).json({
         success: false,
         message: 'Image ID and style are required',
@@ -48,11 +58,14 @@ export const generateHeadshot = async (req, res, next) => {
 
     // Construct path to uploaded image
     const imagePath = path.join(__dirname, '../uploads', imageId);
+    console.log('📂 Image path:', imagePath);
 
     // Check if file exists
     try {
       await fs.access(imagePath);
-    } catch {
+      console.log('✓ Image file found');
+    } catch (err) {
+      console.error('❌ Image file not found:', err.message);
       return res.status(404).json({
         success: false,
         message: 'Uploaded image not found',
